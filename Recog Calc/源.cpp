@@ -29,7 +29,7 @@ Mat mask,ROI;
 
 extern Data_t uart_data_struct;
 
-Point beacon_L;
+Point beacon_L,beacon_pre=0;
 Point car;
 Point car_last=0;
 
@@ -277,7 +277,7 @@ int main()
 			Scalar color(255, 255, 255);
 			drawContours(mask, contours, max_contour, color, CV_FILLED, 8, hierarchy);
 			//RemoveSmallRegion(mask, mask, 80, 0, 1);
-			imshow("mask", mask);
+			//imshow("mask", mask);
 			HSVimage.copyTo(ROI, mask);
 			Mat Beacon_L;
 			Mat Car;
@@ -293,7 +293,7 @@ int main()
 			//	// 绘制追踪结果  
 			//	cv::rectangle(image, *rect, cv::Scalar(0, 255, 0), 2, 1);
 
-
+			double distance_calced = sqrt(pow((beacon_L.x - beacon_pre.x), 2)+pow((beacon_L.y - beacon_pre.y), 2));
 			Moments mo;
 			mo = moments(Beacon_L, true);
 			if (mo.m00 != 0.0000)
@@ -302,8 +302,23 @@ int main()
 				beacon_L.x = mo.m10 / mo.m00;
 				beacon_L.y = mo.m01 / mo.m00;
 
-				cout << "Beacon_L X:" << beacon_L.x << endl;
-				cout << "Beacon_L Y:" << beacon_L.y << endl;
+				cout << distance_calced << endl;
+				if (distance_calced<300)
+				{
+					uart_data_struct.x_speed = beacon_L.x-beacon_pre.x;
+					uart_data_struct.y_speed = beacon_L.y - beacon_pre.y;
+					cout << "y" << endl;
+				}
+				else
+				{
+					uart_data_struct.x_speed = 0;
+					uart_data_struct.y_speed = 0;
+				}
+
+				beacon_pre = beacon_L;
+
+				//cout << "Beacon_L X:" << beacon_L.x << endl;
+				//cout << "Beacon_L Y:" << beacon_L.y << endl;
 			}
 			//contours.clear();
 			
@@ -336,18 +351,20 @@ int main()
 
 					}
 				}
-				imshow("car", Car);
+				RotatedRect car_RECT=minAreaRect(contours_T[car_contour_num]);
+				car_RECT.angle;
+				//imshow("car", Car);
 				Moments mu;
 				mu = moments(contours_T[car_contour_num]);
 				//计算轮廓的质心     
 				if (mu.m00 != 0.0000)
 				{
 					car = Point(mu.m10 / mu.m00, mu.m01 / mu.m00);
-					cout << "car_X" << car.x << endl;
-					cout << "car_Y" << car.y << endl;
+					//cout << "car_X" << car.x << endl;
+					//cout << "car_Y" << car.y << endl;
 					circle(image, car, 10, Scalar(255, 128, 128));
 				}
-				waitKey(1);
+				//waitKey(10);
 			
 			}
 			
@@ -376,11 +393,15 @@ int main()
 		car_angle = atan2(car_speed_p.y, car_speed_p.x);
 		car_last = car;
 
+		uart_data_struct.x_speed = uart_data_struct.x_speed/TIME_perioud*1000;
+		uart_data_struct.y_speed = uart_data_struct.y_speed/TIME_perioud*1000;
+
 		uart_data_struct.dest_x = beacon_L.x;
 		uart_data_struct.dest_y = beacon_L.y;
 		uart_data_struct.car_x = car.x;
 		uart_data_struct.car_y = car.y;
-
+		cout <<"YS   "<< uart_data_struct.x_speed << endl;
+		cout <<"XS   "<< uart_data_struct.y_speed << endl;
 		Point dst_current = dst_calculate(car, beacon_L);
 		uart_data_struct.distance = D_point_to_point(car, dst_current);
 		uart_data_struct.angle=  (atan2(dst_current.y - car.y, dst_current.x - car.x) - atan2(car_speed_p.y, car_speed_p.x)) / 3.1415926 * 180;
@@ -402,8 +423,8 @@ int main()
 		circle(image, beacon_L, 10, Scalar(0, 255, 255));
 		wait_for_send_end();
 		send_once();
-		cout << uart_data_struct.angle << endl;
-		cout << TIME_perioud << endl;
+	/*	cout << uart_data_struct.angle << endl;*/
+		//cout << TIME_perioud << endl;
 		imshow("image", image);
 
 		waitKey(10);

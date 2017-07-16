@@ -1,7 +1,7 @@
 #include "Windows.h"
 #include "iostream"
 #include"SerialCOM.h"
-#define SERIAL_NAME		"COM4"
+#define SERIAL_NAME		"COM3"
 #define BAUD_RATE		115200
 
 

@@ -24,7 +24,8 @@ using namespace cv;
 //}
 //Global params
 
-Mat frame,image,HSVimage,Temp1,Temp2;
+Mat frame,image,HSVimage,Temp1,Temp2,gray,gray_pre;
+Mat hann, prev64f,curr64f;
 Mat mask,ROI;
 
 extern Data_t uart_data_struct;
@@ -192,15 +193,15 @@ int main()
 
 
 
-	//ÆæÒìµã¼ì²â³õÊ¼»¯
-		params.filterByArea = true;
-		params.minArea = 31;
-		params.maxArea = 150;
-		params.filterByColor = true;
-		params.blobColor = 0;
-		params.filterByCircularity = true;
-		params.maxCircularity = 50;
-		params.minCircularity = 0;
+	////ÆæÒìµã¼ì²â³õÊ¼»¯
+	//	params.filterByArea = true;
+	//	params.minArea = 31;
+	//	params.maxArea = 150;
+	//	params.filterByColor = true;
+	//	params.blobColor = 0;
+	//	params.filterByCircularity = true;
+	//	params.maxCircularity = 50;
+	//	params.minCircularity = 0;
 		setMouseCallback("ROI", mouseClickCallback, 0);
 		//cv::waitKey(0);
 		//tracker->init(frame, *rect);
@@ -225,6 +226,7 @@ int main()
 		cam >> frame;
 		frame.copyTo(image);
 		cvtColor(image, HSVimage, COLOR_BGR2HSV);
+		cvtColor(image, gray, COLOR_BGR2GRAY);
 		//inRange(Temp1, Scalar(101, 193, 139), Scalar(187, 255, 203), Temp1);//ÈüµÀÀ¶É«±³¾°·¶Î§£»
 		Mat Temp2;
 		inRange(HSVimage, Scalar(98, 109, 126), Scalar(180, 255, 213), Temp1);//ÈüµÀÀ¶É«±³¾°·¶Î§£»
@@ -302,20 +304,20 @@ int main()
 				beacon_L.x = mo.m10 / mo.m00;
 				beacon_L.y = mo.m01 / mo.m00;
 
-				cout << distance_calced << endl;
-				if (distance_calced<300)
-				{
-					uart_data_struct.x_speed = beacon_L.x-beacon_pre.x;
-					uart_data_struct.y_speed = beacon_L.y - beacon_pre.y;
-					cout << "y" << endl;
-				}
-				else
-				{
-					uart_data_struct.x_speed = 0;
-					uart_data_struct.y_speed = 0;
-				}
+			//	cout << distance_calced << endl;
+				//if (distance_calced<150)
+				//{
+				//	uart_data_struct.x_speed = beacon_L.x-beacon_pre.x;
+				//	uart_data_struct.y_speed = beacon_L.y - beacon_pre.y;
+				//	//cout << "y" << endl;
+				//}
+				//else
+				//{
+				//	uart_data_struct.x_speed = 0;
+				//	uart_data_struct.y_speed = 0;
+				//}
 
-				beacon_pre = beacon_L;
+				//beacon_pre = beacon_L;
 
 				//cout << "Beacon_L X:" << beacon_L.x << endl;
 				//cout << "Beacon_L Y:" << beacon_L.y << endl;
@@ -373,16 +375,22 @@ int main()
 			//imshow("result", mask);
 			//imshow("ROI", ROI);
 			//imshow("Beacon",Beacon_L);
-//#pragma omp  section
-//			{
-//		//Ptr<SimpleBlobDetector> d = SimpleBlobDetector::create(params);
-//
-//		//d->detect(ROI, keypoints);
-//
-//		//drawKeypoints(image, keypoints, frame,Scalar(0,0,255));
-//
-//		//imshow("blob", frame);
-//			}
+#pragma omp  section
+			{
+				if (gray_pre.empty()) {
+					gray_pre = gray.clone();
+					createHanningWindow(hann, gray.size(), CV_64F);
+				}
+
+				if (gray.empty()) {				}
+				gray_pre.convertTo(prev64f, CV_64F);
+				gray.convertTo(curr64f, CV_64F);
+
+				Point2d shift = phaseCorrelate(prev64f, curr64f, hann);
+				uart_data_struct.x_speed = shift.x;
+				uart_data_struct.y_speed = shift.y;
+				gray_pre = gray.clone();
+			}
 		}
 //#pragma omp barrier
 		Point2f car_speed_p;
@@ -424,7 +432,7 @@ int main()
 		wait_for_send_end();
 		send_once();
 	/*	cout << uart_data_struct.angle << endl;*/
-		//cout << TIME_perioud << endl;
+		cout << TIME_perioud << endl;
 		imshow("image", image);
 
 		waitKey(10);

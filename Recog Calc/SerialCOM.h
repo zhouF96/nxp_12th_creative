@@ -1,8 +1,20 @@
+#include "cv.hpp"
+
 #pragma once
 
 
 #pragma pack(1)
-typedef struct
+
+struct Point2s
+{
+	unsigned short x;
+	unsigned short y;
+};
+
+
+
+
+typedef struct flight_data_pack
 {
 	float x = 0;				//存放飞机x方向偏移
 	float y = 0;				//存放飞机Y方向偏移
@@ -16,6 +28,9 @@ typedef struct
 	unsigned short dest_y;
 	float angle = 0;			//存放小车打角
 	float distance = 0;	//存放小车距离目标距离
+
+	unsigned char beacon_num = 0;
+	Point2s beacon[4];
 }Data_t;
 
 extern Data_t uart_data_struct;

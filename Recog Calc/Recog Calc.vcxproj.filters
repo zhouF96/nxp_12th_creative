@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="源.cpp">
+    <ClCompile Include="SerialCOM.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SerialCOM.cpp">
+    <ClCompile Include="main2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

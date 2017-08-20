@@ -43,14 +43,10 @@ SimpleBlobDetector::Params params;
 void onChangeTrakBar(int H1, void *data)
 {
 	params.minArea = H1;
-
-
 }
 void onChangeTrakBar1(int S1, void *data)
 {
 	params.maxArea = S1;
-
-
 }
 void onChangeTrakBar2(int V1, void *data)
 {
@@ -109,7 +105,6 @@ double D_point_to_point(Point a, Point b)
 {
 	double dx = a.x - b.x;
 	double dy = a.y - b.y;
-
 	return sqrt(dx*dx + dy*dy);
 }
 
@@ -189,8 +184,7 @@ int main()
 	setMouseCallback("image", mouseClickCallback, 0);
 
 	Serial_COM_init();
-
-
+	cout << a<< endl;
 
 
 	////ÆæÒìµã¼ì²â³õÊ¼»¯
@@ -304,23 +298,23 @@ int main()
 				beacon_L.x = mo.m10 / mo.m00;
 				beacon_L.y = mo.m01 / mo.m00;
 
-			//	cout << distance_calced << endl;
-				//if (distance_calced<150)
-				//{
-				//	uart_data_struct.x_speed = beacon_L.x-beacon_pre.x;
-				//	uart_data_struct.y_speed = beacon_L.y - beacon_pre.y;
-				//	//cout << "y" << endl;
-				//}
-				//else
-				//{
-				//	uart_data_struct.x_speed = 0;
-				//	uart_data_struct.y_speed = 0;
-				//}
+				cout << distance_calced << endl;
+				if (distance_calced<150)
+				{
+					uart_data_struct.x_speed = beacon_L.x-beacon_pre.x;
+					uart_data_struct.y_speed = beacon_L.y - beacon_pre.y;
+					//cout << "y" << endl;
+				}
+				else
+				{
+					uart_data_struct.x_speed = 0;
+					uart_data_struct.y_speed = 0;
+				}
 
-				//beacon_pre = beacon_L;
+				beacon_pre = beacon_L;
 
-				//cout << "Beacon_L X:" << beacon_L.x << endl;
-				//cout << "Beacon_L Y:" << beacon_L.y << endl;
+				cout << "Beacon_L X:" << beacon_L.x << endl;
+				cout << "Beacon_L Y:" << beacon_L.y << endl;
 			}
 			//contours.clear();
 			
@@ -350,7 +344,6 @@ int main()
 						maxarea = contourArea(contours_T[i]);
 						//car_xy = contour_center_xy[contour_counter - 1];
 						car_contour_num = i;
-
 					}
 				}
 				RotatedRect car_RECT=minAreaRect(contours_T[car_contour_num]);
@@ -375,22 +368,22 @@ int main()
 			//imshow("result", mask);
 			//imshow("ROI", ROI);
 			//imshow("Beacon",Beacon_L);
-#pragma omp  section
-			{
-				if (gray_pre.empty()) {
-					gray_pre = gray.clone();
-					createHanningWindow(hann, gray.size(), CV_64F);
-				}
-
-				if (gray.empty()) {				}
-				gray_pre.convertTo(prev64f, CV_64F);
-				gray.convertTo(curr64f, CV_64F);
-
-				Point2d shift = phaseCorrelate(prev64f, curr64f, hann);
-				uart_data_struct.x_speed = shift.x;
-				uart_data_struct.y_speed = shift.y;
-				gray_pre = gray.clone();
-			}
+//#pragma omp  section
+//			{
+//				if (gray_pre.empty()) {
+//					gray_pre = gray.clone();
+//					createHanningWindow(hann, gray.size(), CV_64F);
+//				}
+//
+//				if (gray.empty()) {				}
+//				gray_pre.convertTo(prev64f, CV_64F);
+//				gray.convertTo(curr64f, CV_64F);
+//
+//				Point2d shift = phaseCorrelate(prev64f, curr64f, hann);
+//				uart_data_struct.x_speed = shift.x;
+//				uart_data_struct.y_speed = shift.y;
+//				gray_pre = gray.clone();
+//			}
 		}
 //#pragma omp barrier
 		Point2f car_speed_p;
@@ -408,8 +401,8 @@ int main()
 		uart_data_struct.dest_y = beacon_L.y;
 		uart_data_struct.car_x = car.x;
 		uart_data_struct.car_y = car.y;
-		cout <<"YS   "<< uart_data_struct.x_speed << endl;
-		cout <<"XS   "<< uart_data_struct.y_speed << endl;
+		cout <<"XS   "<< uart_data_struct.x_speed << endl;
+		cout <<"YS   "<< uart_data_struct.y_speed << endl;
 		Point dst_current = dst_calculate(car, beacon_L);
 		uart_data_struct.distance = D_point_to_point(car, dst_current);
 		uart_data_struct.angle=  (atan2(dst_current.y - car.y, dst_current.x - car.x) - atan2(car_speed_p.y, car_speed_p.x)) / 3.1415926 * 180;
